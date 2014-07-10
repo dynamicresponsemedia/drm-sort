@@ -3,173 +3,212 @@
 ###############################################################################
 "use strict"
 
-# all items should be the same data type
-
+$ = jQuery
 class @DrmSort
-    constructor: (@lists = $('.drm-sortable'), @autoSort = yes) ->
-        self = @
+    constructor: (@lists = $('.drm-sortable'), @autoSort = yes, @buttonClass = 'drm-sort-list', @activeClass = 'active', @ignoreWords = ['a', 'the']) ->
+        self = @        
 
         if self.autoSort
-            $.each self.lists, (key, value) ->
-                that = $ value
-                values = self.getValues that
-                self.renderSort values, 'ascending', that
+            $.each @lists, ->
+                list = $ @
+                listItems = list.find 'li'
+                sortedList = self.sortList 'ascending', listItems
+                self.renderSort sortedList, list
+                $("button.drm-sort-list[data-sort='ascending']").addClass self.activeClass
 
-        $('body').on 'click', '.drm-sort-list', ->
-            that = $ @
-            listId = that.data 'list'
-            list = $ "ul##{listId}"
-            values = self.getValues.call @, list
-            direction = $(@).data 'sort'
-            self.renderSort values, direction, list
+        $('body').on 'click', ".#{@buttonClass}", ->
+            _that = $ @
+            _listId = _that.data 'list'
+            list = $ "ul##{_listId}"
+            direction = _that.data 'sort'
+            listItems = list.find 'li'
+            sortedList = self.sortList direction, listItems
+            self.renderSort sortedList, list
+            self.toggleActiveClass.call @, 'active', '.button-group'
 
-    getValues: (list) ->
-        that = $ @
-        listItems = list.find 'li'
-        values = []
+    toggleActiveClass: (className, parent) ->
+        $(@).closest(parent).find(".#{className}").removeClass(className).end().end().addClass className
 
-        listItems.each ->
-            that = $ @
-            values.push $.trim(that.text())
-
-        values
-
-    sortValues: (values, direction) =>
-        self = @
-        _patterns =
+    sortList: (direction, listItems) =>
+        # TODO: add support for sorting datetime values
+        patterns =
             number: new RegExp "^(?:\\-?\\d+|\\d*)(?:\\.?\\d+|\\d)"
             alpha: new RegExp '^[a-z ,.\\-]*','i'
             # mm/dd/yyyy
             monthDayYear: new RegExp '^(?:[0]?[1-9]|[1][012]|[1-9])[-\/.](?:[0]?[1-9]|[12][0-9]|[3][01])(?:[-\/.][0-9]{4})'
             # 00:00pm
             time: new RegExp '^(?:[12][012]|[0]?[0-9]):[012345][0-9](?:am|pm)', 'i'
+            hour: new RegExp '^(\\d+)'
+            minute: new RegExp ':(\\d+)'
+            ampm: new RegExp '(am|pm|AM|PM)$'
+        
+        sortUtilities =
+            capitalize: (str) ->
+                str.toLowerCase().replace /^.|\s\S/g, (a) ->
+                    a.toUpperCase()
 
-        _getDataType = (values) =>
-            types = []
+            getValues: (listItems) ->
+                # creates an array of values from list items
+                values = []
 
-            _isDate = (value) ->
-                if _patterns.monthDayYear.test(value) then true else false
+                listItems.each ->
+                    _that = $ @
+                    values.push $.trim(_that.text())
 
-            _isNumber = (value) ->
-                if _patterns.number.test(value) then true else false
+                return values
+            parseTime: (time) ->
+                _hour = parseInt(patterns.hour.exec(time)[1], 10)
+                _minutes = patterns.minute.exec(time)[1]
+                _ampm = patterns.ampm.exec(time)[1].toLowerCase()
 
-            _isAlpha = (value) ->
-                if _patterns.alpha.test(value) then true else false
-
-            _isTime = (value) ->
-                if _patterns.time.test(value) then true else false
-
-            $.each values, (key, value) ->
-                if _isDate.call self, value
-                    types.push 'date'
-                else if _isTime.call self, value
-                    types.push 'time'
-                else if _isNumber.call self, value
-                    types.push 'number'
-                else if _isAlpha.call self, value
-                    types.push 'alpha'
-                else
-                    types.push null
-
-            if $.inArray('alpha', types) isnt -1 then 'alpha' else types[0]
-
-        type = _getDataType values
-
-        if !type
-            null
-
-        else if type is 'date'
-            _sortAsc = (a, b) ->
-                a = new Date _patterns.monthDayYear.exec(a)
-                b = new Date _patterns.monthDayYear.exec(b)
-                a - b
-
-            _sortDesc = (a, b) ->
-                a = new Date _patterns.monthDayYear.exec(a)
-                b = new Date _patterns.monthDayYear.exec(b)
-                b - a
-
-            if direction is 'ascending' then values.sort _sortAsc else values.sort _sortDesc    
-
-        else if type is 'time'
-            _parseTime = (time) ->
-                hour = parseInt(/^(\d+)/.exec(time)[1], 10)
-                minutes = /:(\d+)/.exec(time)[1]
-                ampm = /(am|pm|AM|PM)$/.exec(time)[1].toLowerCase()
-
-                if ampm is 'am'
-                    hour = hour.toString()
+                if _ampm is 'am'
+                    _hour = _hour.toString()
                     
-                    if hour is '12'
-                        hour = '0'
-                    else if hour.length is 1
-                        hour = "0#{hour}"
+                    if _hour is '12'
+                        _hour = '0'
+                    else if _hour.length is 1
+                        _hour = "0#{_hour}"
                         
-                    "#{hour}:#{minutes}"
+                    return "#{_hour}:#{_minutes}"
 
-                else if ampm is 'pm'
-                    "#{hour + 12}:#{minutes}"
-
-            _sortAsc = (a, b) ->
-                a = _parseTime _patterns.time.exec(a)
-                b = _parseTime _patterns.time.exec(b)
-                new Date("04-22-2014 #{a}") - new Date("04-22-2014 #{b}")
-
-            _sortDesc = (a, b) ->
-                a = _parseTime _patterns.time.exec(a)
-                b = _parseTime _patterns.time.exec(b)
-                new Date("04-22-2014 #{b}") - new Date("04-22-2014 #{a}")
-
-            if direction is 'ascending' then values.sort _sortAsc else values.sort _sortDesc
-
-        else if type is 'alpha'
-            _cleanAlpha = (value) ->
+                else if _ampm is 'pm'
+                    return "#{_hour + 12}:#{_minutes}"
+            
+            cleanAlpha: (str, ignoreWords = []) ->
                 # removes leading 'the' or 'a'
-                value.replace(/^the /i, '').replace /^a /i, ''
+                $.each ignoreWords, ->
+                    re = new RegExp "^#{@}\\s", 'i'
+                    str = str.replace re, ''
+                    return str
 
-            _sortAsc = (a, b) ->
-                # use clean alpha to remove leading 'the' or 'a' then convert to lowercase for case insensitive sort
-                a = _cleanAlpha(a).toLowerCase()
-                b = _cleanAlpha(b).toLowerCase()
+                return str
 
-                if a < b
-                    -1
-                else if a > b
-                    1
-                else if a is b
-                    0
+            sortValues: (a, b, direction = 'ascending') ->
+                # test for alpha values and perform alpha sort
+                if patterns.alpha.test(a)
+                    if a < b
+                        return if direction is 'ascending' then -1 else 1
+                    else if a > b
+                        return if direction is 'ascending' then 1 else -1
+                    else if a is b
+                        return 0
+                # if values are not alpha perform an numeric sort
+                else
+                    return if direction is 'ascending' then a - b else b - a
+        
+            getDataTypes: (listItems, type = null) =>
+                self = @
+                values = sortUtilities.getValues listItems
+                types = []
 
-            _sortDesc = (a, b) ->
-                # use clean alpha to remove leading 'the' or 'a' then convert to lowercase for case insensitive sort
-                a = _cleanAlpha(a).toLowerCase()
-                b = _cleanAlpha(b).toLowerCase()
+                if type?
+                    types.push type
+                else
+                    $.each values, ->
+                        if dataTypeChecks.isDate.call self, @
+                            types.push 'date'
+                        else if dataTypeChecks.isTime.call self, @
+                            types.push 'time'
+                        else if dataTypeChecks.isNumber.call self, @
+                            types.push 'number'
+                        else if dataTypeChecks.isAlpha.call self, @
+                            types.push 'alpha'
+                        else
+                            types.push null
 
-                if a < b
-                    1
-                else if a > b
-                    -1
-                else if a is b
-                    0
+                return $.unique types
 
-            if direction is 'ascending' then values.sort _sortAsc else values.sort _sortDesc
+            createArrays: (obj, list) ->
+                # create keys with empty arrays for each value in an array
+                $.each list, ->
+                    obj[@] = []
+                    return
+                return obj
 
-        else if type is 'number'
-            _sortAsc = (a, b) ->
-                parseFloat(a) - parseFloat(b)
+            concatArrays: (obj) ->
+                # combine an object made up of arrays into a single array
+                arr = []
+                $.each obj, ->
+                    arr = arr.concat @
+                    return
+                return arr
 
-            _sortDesc = (a, b) ->
-                parseFloat(b) - parseFloat(a)
+            sortComplexList: (types, listItems, direction) ->            
+                # sort complex list with two or more data types
+                # group data types together
+                self = @
+                sortLists = {}
+                # create sortLists arrays
+                @createArrays sortLists, types
+                # add listItems to sortLists arrays
+                $.each listItems, ->
+                    listItem = @
+                    value = $.trim $(listItem).text()
+                    $.each types, ->
+                        if dataTypeChecks["is#{self.capitalize(@)}"].call self, value
+                            sortLists["#{@}"].push listItem
+                # sort sortLists arrays
+                $.each sortLists, (key) ->
+                    comparators["sort#{self.capitalize(key)}"] sortLists[key], direction
 
-            if direction is 'ascending' then values.sort _sortAsc else values.sort _sortDesc
+                return @concatArrays sortLists
 
-    renderSort: (values, direction, list) =>
-        values = @sortValues values, direction
-        listHtml = ''
+        dataTypeChecks =
+            isDate: (value) -> return if patterns.monthDayYear.test(value) then true else false
+            isNumber: (value) -> return if patterns.number.test(value) then true else false
+            isAlpha: (value) -> return if patterns.alpha.test(value) then true else false
+            isTime: (value) -> return if patterns.time.test(value) then true else false
+        
+        comparators = 
+            sortDate: (listItems, direction) ->
+                # need support for various date and time formats
+                _sort = (a, b) ->
+                    if dataTypeChecks.isDate($.trim($(a).text())) and dataTypeChecks.isDate($.trim($(b).text()))
+                        a = new Date patterns.monthDayYear.exec($.trim($(a).text()))
+                        b = new Date patterns.monthDayYear.exec($.trim($(b).text()))
 
-        if values?
-            $.each values, (key, value) ->
-                listHtml += "<li>#{value}</li>"
+                    return sortUtilities.sortValues a, b, direction
 
-            list.html listHtml
+                return listItems.sort _sort 
+
+            sortTime: (listItems, direction) ->
+                # need support for various date and time formats                
+                _sort = (a, b) ->
+                    if dataTypeChecks.isTime($.trim($(a).text())) and dataTypeChecks.isTime($.trim($(b).text()))
+                        a = new Date "04-22-2014 #{sortUtilities.parseTime(patterns.time.exec($.trim($(a).text())))}"
+                        b = new Date "04-22-2014 #{sortUtilities.parseTime(patterns.time.exec($.trim($(b).text())))}"
+
+                    return sortUtilities.sortValues a, b, direction
+
+                return listItems.sort _sort
+
+            sortAlpha: (listItems, direction) =>
+                _sort = (a, b) =>
+                    a = sortUtilities.cleanAlpha($.trim($(a).text()), @ignoreWords).toLowerCase()
+                    b = sortUtilities.cleanAlpha($.trim($(b).text()), @ignoreWords).toLowerCase()
+
+                    return sortUtilities.sortValues a, b, direction
+
+                return listItems.sort _sort
+
+            sortNumber: (listItems, direction) ->
+                _sort = (a, b) ->
+                    a = parseFloat($.trim($(a).text()))
+                    b = parseFloat($.trim($(b).text()))
+
+                    return sortUtilities.sortValues a, b, direction
+
+                return listItems.sort _sort
+
+        type = listItems.parent().data 'type'
+        types = sortUtilities.getDataTypes listItems, type
+
+        return sortUtilities.sortComplexList types, listItems, direction
+
+    renderSort: (sortedList, list) ->
+        # clear unsorted items from list
+        list.empty()
+        # replace with sortedList
+        $.each sortedList, -> list.append @
 
 new DrmSort()
