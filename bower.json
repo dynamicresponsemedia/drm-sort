@@ -1,0 +1,31 @@
+{
+  "name": "elr-sort",
+  "version": "1.0.0",
+  "homepage": "https://github.com/elr-utilities/elr-sort",
+  "authors": [
+    "Elizabeth Rogers <beth@elizabeth-rogers.com>"
+  ],
+  "description": "Javascript Sort",
+  "main": "dist/elr-sort.js",
+  "moduleType": [
+    "globals"
+  ],
+  "keywords": [
+    "sort",
+    "jquery",
+    "javascript",
+    "ui"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests",
+    "src"
+  ],
+  "dependencies": {
+    "jquery": "~2.1.4"
+  }
+}
