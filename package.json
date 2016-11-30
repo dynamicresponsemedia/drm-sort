@@ -1,6 +1,6 @@
 {
   "name": "elr-sort",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "list sorting",
   "main": "dist/elr-sort.js",
   "repository": {
