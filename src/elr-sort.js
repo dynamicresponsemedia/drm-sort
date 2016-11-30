@@ -1,72 +1,73 @@
-(function($) {
-    window.elrSort = function(params) {
-        var self = {},
-            spec = params || {};
+import elrUtlities from 'elr-utilities';
+const $ = require('jquery');
 
-        spec.listsClass = 'elr-sortable';
-        spec.autoSort = true;
-        spec.buttonClass = 'elr-sort-list';
-        spec.activeClass = 'active';
-        spec.ignoreWords = ['a', 'the'];
+let elr = elrUtlities();
 
-        var buttonClass = '.' + spec.buttonClass;
+const elrSort = function({
+    listsClass = 'elr-sortable',
+    autoSort = true,
+    buttonClass = 'elr-sort-button',
+    activeClass = 'active',
+    ignoreWords = ['a', 'the']
+} = {}) {
+    const sortButton = `.${buttonClass}`;
+    const self = {
+        sortList(direction, $listItems) {
+            const type = $listItems.parent().data('type');
+            let types;
 
-        var toggleActiveClass = function(className, parent) {
-            $(this).closest(parent).find('.' + className).removeClass(className).end().end().addClass(className);
-        };
-
-        var sortList = function(direction, $listItems) {
-            var type = $listItems.parent().data('type');
-            var types = [];
-            // var values = elr.toArray($listItems);
-            // var types = elr.getDataTypes(values, type);
-
-            if ( type ) {
-                types.push(type);
-            } else { 
+            if (type) {
+                types = [type];
+            } else {
                 types = ['date', 'time', 'number', 'alpha'];
             }
 
             return elr.sortComplexList(types, $listItems, direction);
-        };
-
-        var renderSort = function(sortedList, $list) {
+        },
+        renderSort(sortedList, $list) {
             $list.empty();
-            
+
             $.each(sortedList, function() {
-                var value = $.trim($(this).text());
-                var $listItem = $('<li>', {
+                const value = elr.trim($(this).text());
+                const $listItem = elr.createElement('li', {
                     text: value
                 });
+
                 $list.append($listItem);
             });
-        };
-
-        var $lists = $('.' + spec.listsClass);
-
-        if ( spec.autoSort ) {
-            $.each($lists, function() {
-                var $list = $(this);
-                var $listItems = $list.find('li');
-                var $sortedList = sortList('ascending', $listItems);
-
-                renderSort($sortedList, $list);
-                $("button." + spec.buttonClass + "[data-sort='ascending']").addClass(spec.activeClass);
-            });
         }
-
-        $('body').on('click', buttonClass, function() {
-            var $that = $(this);
-            var listId = $that.data('list');
-            var $list = $('ul#' + listId);
-            var direction = $that.data('sort');
-            var $listItems = $list.find('li');
-            var $sortedList = sortList(direction, $listItems);
-
-            renderSort($sortedList, $list);
-            toggleActiveClass.call(this, 'active', '.button-group');
-        });
-
-        return self;
     };
-})(jQuery);
+
+    const toggleActiveClass = function(className, parent) {
+        $(this).closest(parent).find(`.${className}`).removeClass(className).end().end().addClass(className);
+    };
+
+    const $lists = $(`.${listsClass}`);
+
+    if (autoSort) {
+        $.each($lists, function() {
+            const $list = $(this);
+            const $listItems = $list.find('li');
+            const $sortedList = self.sortList('ascending', $listItems);
+
+            self.renderSort($sortedList, $list);
+            $(`button.${buttonClass}[data-sort='ascending']`).addClass(activeClass);
+        });
+    }
+
+    $('body').on('click', sortButton, function() {
+        const $that = $(this);
+        const listId = $that.data('list');
+        const $list = $(`ul#${listId}`);
+        const direction = $that.data('sort');
+        const $listItems = $list.find('li');
+        const $sortedList = self.sortList(direction, $listItems);
+
+        self.renderSort($sortedList, $list);
+        toggleActiveClass.call(this, 'active', '.button-group');
+    });
+
+    return self;
+};
+
+export default elrSort;
