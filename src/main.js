@@ -1,11 +1,8 @@
-import elrUtlities from 'elr-utility-lib';
+import elrUtilities from 'elr-utility-lib';
 import elrUI from 'elr-ui';
-const $ = require('jquery');
+import $ from 'jquery';
 
-let elr = elrUtlities();
-let ui = elrUI();
-
-const elrSort = function({
+export default function({
     listsClass = 'elr-sortable',
     autoSort = true,
     buttonClass = 'elr-sort-button',
@@ -13,6 +10,9 @@ const elrSort = function({
     ignoreWords = ['a', 'the']
 } = {}) {
     const sortButton = `.${buttonClass}`;
+    const elr = elrUtilities()
+    const ui = elrUI()
+
     const self = {
         sortTime($items, dir) {
             const sort = (a, b) => {
@@ -95,8 +95,8 @@ const elrSort = function({
             });
 
             // sort sortLists arrays
-            elr.each(sortLists, function(key) {
-                elr[`sort${elr.capitalize(key)}`](sortLists[key], dir);
+            elr.each(sortLists, (key) => {
+                this[`sort${elr.capitalize(key)}`](sortLists[key], dir);
             });
 
             return elr.concatArrays(sortLists);
@@ -157,6 +157,4 @@ const elrSort = function({
     });
 
     return self;
-};
-
-export default elrSort;
+}
