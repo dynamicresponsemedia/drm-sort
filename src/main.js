@@ -67,10 +67,10 @@ export default function({
 
             // add list items to sortLists arrays
 
-            elr.each(types, function() {
+            $.each(types, function() {
                 const type = this;
 
-                elr.each(listItems, function() {
+                $.each(listItems, function() {
                     const $listItem = $(this);
                     const val = elr.trim($listItem.text());
 
@@ -81,7 +81,7 @@ export default function({
                     }
                 });
 
-                elr.each(sortLists[type], function() {
+                $.each(sortLists[type], function() {
                     const val = ($(this).text());
 
                     $(listItems).each(function(k) {
@@ -95,7 +95,7 @@ export default function({
             });
 
             // sort sortLists arrays
-            elr.each(sortLists, (key) => {
+            $.each(sortLists, (key) => {
                 this[`sort${elr.capitalize(key)}`](sortLists[key], dir);
             });
 
