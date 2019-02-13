@@ -24,17 +24,17 @@
     "codecov": "^3.0.0",
     "del": "^3.0.0",
     "ghooks": "^2.0.0",
-    "gulp": "^3.9.1",
-    "gulp-babel": "^7.0.0",
+    "gulp": "^4.0.0",
+    "gulp-babel": "^8.0.0",
     "gulp-jshint": "^2.0.1",
-    "gulp-mocha": "^4.3.1",
+    "gulp-mocha": "^6.0.0",
     "gulp-notify": "^3.0.0",
     "gulp-plumber": "^1.1.0",
     "gulp-sourcemaps": "^2.1.1",
     "jshint": "^2.9.3",
-    "mocha": "^4.0.1",
+    "mocha": "^5.2.0",
     "mocha-notifier-reporter": "^0.1.2",
-    "nyc": "^11.2.1"
+    "nyc": "^13.2.0"
   },
   "homepage": "http://www.elizabeth-rogers.com/elr-utilities/js-sort.html",
   "keywords": [
